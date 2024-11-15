@@ -6,66 +6,87 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
 
-public class LobbyManager : MonoBehaviour
+public class LobbyManager : MonoBehaviour, Manager
 {
-
-    private TcpClient tcpClient;
-    private string matchServerIP = "127.0.0.1";
-    private int port = 7777;
-    private NetworkStream stream;
-    private bool tryConnect = false;
-    private static bool isConnected = false;
 
     public GameObject loadingText;
     public GameObject defaultGroup;
+    public NetworkManager networkManager;
 
+    public TMP_InputField inputId;
+    public TMP_InputField inputPwd;
+    public TMP_InputField inputNickname;
+    public TMP_Text txtError;
 
+    private bool occurError = false;
+    private string errorMessage = "";
+    private bool callNextScene = false;
     // Start is called before the first frame update
     void Start()
     {
-        tcpClient = new TcpClient(matchServerIP, port);
-        stream = tcpClient.GetStream();
-        tryConnect = true;
-        Thread thread = new Thread(() => Listen());
-        thread.Start();
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (isConnected)
+        if (networkManager.isConnected)
         {
             loadingText.GetComponentInChildren<LoadingText>().setConnectStat(true);
             loadingText.SetActive(false);
             defaultGroup.SetActive(true);
         }
+        
+        if (occurError)
+        {   
+            txtError.text = errorMessage;
+            txtError.gameObject.SetActive(true);
+        }
+
+        if (callNextScene)
+        {
+            SceneManager.LoadScene("Scenes/LobbyScene");
+        }
+
     }
 
-    public void Listen()
+    public void Login() {
+        string id = inputId.text;
+        string pwd = inputPwd.text;
+
+        networkManager.Send(Type.LOGIN, id + ";" + pwd);
+    }
+
+    public void SignUp()
     {
-        while (tryConnect) { 
-            byte[] buffer = new byte[1024];
-            try
-            {
-                int len = stream.Read(buffer, 0, buffer.Length);
-                if (len <= 0) continue;
-                string dataStr = Encoding.UTF8.GetString(buffer);
-                Debug.Log(dataStr);
-                DTO dto = JsonUtility.FromJson<DTO>(dataStr);
-                switch (dto.msg)
-                {
-                    case "success":
-                        isConnected = true;
-                        break;
-                    default:
-                        break;
-                }
-            }catch(Exception e)
-            {
-                Debug.LogException(e);
-            }
+        string id = inputId.text;
+        string pwd = inputPwd.text;
+        string nickname = inputNickname.text;
+
+        networkManager.Send(Type.SIGNUP, id+";"+ pwd+";"+nickname);
+    }
+
+    public void goNextScene()
+    {
+        callNextScene = true;
+    }
+
+    public void OnError(string msg)
+    {
+        switch (msg)
+        {
+            case "01":
+                errorMessage = "등록되지 않은 사용자입니다.";
+                break;
+            case "02":
+                errorMessage = "비밀번호가 잘못되었습니다.";
+                break;
         }
+        occurError = true;
     }
 
 }
+
