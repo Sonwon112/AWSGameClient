@@ -88,5 +88,7 @@ public class LobbyManager : MonoBehaviour, Manager
         occurError = true;
     }
 
+    public void OnMessage(Type type, string msg) { }
+
 }
 
