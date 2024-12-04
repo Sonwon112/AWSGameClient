@@ -15,7 +15,10 @@ public class Player : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        playManager = GameObject.Find("PlayManager").GetComponent<PlayManager>();
+        if (GameObject.Find("PlayManager") != null)
+        {
+            playManager = GameObject.Find("PlayManager").GetComponent<PlayManager>();
+        }
     }
 
     // Update is called once per frame
@@ -28,6 +31,7 @@ public class Player : MonoBehaviour
 
             transform.Translate(Vector3.forward * vertical * movingSpeed * Time.deltaTime);
             transform.Translate(Vector3.right*horizontal*movingSpeed* Time.deltaTime);
+            playManager.SendOwnPlayerTransform(transform.position);
 
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {

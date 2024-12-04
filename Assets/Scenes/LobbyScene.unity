@@ -1246,6 +1246,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isConnected: 0
+  clientNickname: test
 --- !u!4 &1527406424
 Transform:
   m_ObjectHideFlags: 0
@@ -1658,6 +1659,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1614835167473087169, guid: 25f976421accd6d458001e310c87f2f1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2713271311250219465, guid: 25f976421accd6d458001e310c87f2f1, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1697,6 +1702,10 @@ PrefabInstance:
     - target: {fileID: 2713271311250219465, guid: 25f976421accd6d458001e310c87f2f1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3000916624925633784, guid: 25f976421accd6d458001e310c87f2f1, type: 3}
+      propertyPath: m_IsKinematic
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4730683213741721661, guid: 25f976421accd6d458001e310c87f2f1, type: 3}
       propertyPath: m_Name

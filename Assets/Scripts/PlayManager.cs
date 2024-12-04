@@ -16,10 +16,11 @@ public class PlayManager : MonoBehaviour, Manager
 
     private NetworkManager networkManager;
     private bool isPlaying = false;
-    private int totalCount = 2;
+    private int totalCount = 1;
     private int currCount = 0;
 
     private bool isTest = false;
+    private bool isSpawnedOwn = false;
     private Vector2 BOUNDARY_MIN = new Vector2(-49, -49);
     private Vector2 BOUNDARY_MAX = new Vector2(49, 49);
 
@@ -48,6 +49,11 @@ public class PlayManager : MonoBehaviour, Manager
         if (!isPlaying && !isTest)
         {
             setPlayerCnt(networkManager.getCurrParticipant());
+            if (networkManager.isStartGame && !isSpawnedOwn) { 
+                StartGame();
+                networkManager.setManager(this);
+                isSpawnedOwn=true;
+            }
         }
     }
 
@@ -71,9 +77,20 @@ public class PlayManager : MonoBehaviour, Manager
     {
         switch (type)
         {
+            case Type.CONNECT:
+                StartGame();
+                break;
             case Type.INSTANTIATE:
                 string[] tmp = msg.Split(';');
                 instantiateOtherPlayer(int.Parse(tmp[0]), tmp[1]);
+                break;
+            case Type.SEND_TRANSFORM:
+                setOthrePlayTransform(msg);
+                break;
+            case Type.SEND_PARTICIPANT:
+                int id = int.Parse(msg);
+                Destroy(players[id].gameObject);
+                players.Remove(id);
                 break;
         }
     }
@@ -96,13 +113,14 @@ public class PlayManager : MonoBehaviour, Manager
         if (isPlaying)
         {
             networkManager.Send(Type.INSTANTIATE);
-            networkManager.Send(Type.SEND_TRANSFORM);
+            SendOwnPlayerTransform(tmp.transform.position);
         }
     }
 
     public void SendOwnPlayerTransform(Vector3 position)
     {
-
+        string msg = position.x + ";" + position.y + ";" + position.z;
+        networkManager.SendPlayServer(Type.SEND_TRANSFORM, msg);
     }
 
     public void instantiateOtherPlayer(int id, string nickname)
@@ -112,13 +130,22 @@ public class PlayManager : MonoBehaviour, Manager
         players.Add(id, tmp);
     }
 
+    public void setOthrePlayTransform(string data)
+    {
+        string[] tmp = data.Split(";");
+        players[int.Parse(tmp[0])].transform.position = new Vector3(float.Parse(tmp[1]), float.Parse(tmp[2]), float.Parse(tmp[3]));
+        players[int.Parse(tmp[0])].GetComponent<Player>().setPlayerPosition(players[int.Parse(tmp[0])].transform.position);
+    }
+
     public void OwnPlayerDead()
     {
         PlayUI.SetActive(false);
         DeadUI.SetActive(true);
         if (isPlaying)
         {
-            networkManager.Send(Type.SEND_PARTICIPANT, "");
+            networkManager.SendPlayServer(Type.SEND_PARTICIPANT, "die");
         }
     }
+
+    public int getIndex() { return 2; }
 }

@@ -89,6 +89,7 @@ public class LobbyManager : MonoBehaviour, Manager
     }
 
     public void OnMessage(Type type, string msg) { }
+    public int getIndex() { return 0; }
 
 }
 

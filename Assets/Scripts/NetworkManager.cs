@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -24,7 +25,8 @@ public class NetworkManager : MonoBehaviour
 
     // 매치 서버
     private TcpClient tcpClient;
-    private string matchServerIP = "127.0.0.1";
+    private string matchServerIP = "52.70.174.90";
+    //private string matchServerIP = "127.0.0.1"; // 테스트용
     private int port = 7777;
     private NetworkStream stream;
     private bool tryConnect = false;
@@ -39,12 +41,14 @@ public class NetworkManager : MonoBehaviour
     // 플레이 서버
     private UdpClient udpClient;
     private IPEndPoint serverEndPoint;
-    private string playServerIP = "127.0.0.1";
+    private string playServerIP = "52.20.220.130";
+    //private string playServerIP = "127.0.0.1"; // 테스트용
     private int serverPort = 9100;
     private int playPort = 9000;
     private bool isPlayMode = false;
 
     private int currParticipant = 0;
+    public bool isStartGame = false;
 
 
     // Start is called before the first frame update
@@ -61,6 +65,7 @@ public class NetworkManager : MonoBehaviour
     public void setManager(Manager manager)
     {
         this.manager = manager;
+        Debug.Log(this.manager);
     }
 
     // Update is called once per frame
@@ -75,7 +80,11 @@ public class NetworkManager : MonoBehaviour
         {
             if (listenThread.IsAlive)
             {
+                tcpClient.Close();
+                udpClient.Close();
                 listenThread.Abort();
+                isPlayMode = false;
+                tryConnect = false;
             }
         }
 
@@ -190,8 +199,9 @@ public class NetworkManager : MonoBehaviour
     {
         while (isPlayMode) {
             try
-            {   
+            {
                 UdpReceiveResult readBuffer = await udpClient.ReceiveAsync();
+
                 string tmp = Encoding.UTF8.GetString(readBuffer.Buffer);
                 DTO dto = JsonUtility.FromJson<DTO>(tmp);
                 Type type = (Type)Enum.Parse(typeof(Type), dto.type);
@@ -204,16 +214,24 @@ public class NetworkManager : MonoBehaviour
                             manager.goNextScene();
                         }else if (dto.msg.Equals("COMPLETE"))
                         {
-
+                            Debug.Log("전원참여 완료");
+                            //Debug.Log(this.manager);
+                            isStartGame = true;
                         }
                         break;
                     case Type.INSTANTIATE:
-                        manager.OnMessage(Type.INSTANTIATE,dto.msg);
+                        manager.OnMessage(Type.INSTANTIATE, dto.msg);
                         break;
                     case Type.SEND_TRANSFORM:
+                        manager.OnMessage(Type.SEND_TRANSFORM, dto.id + ";" + dto.msg);
                         break;
                     case Type.SEND_PARTICIPANT:
                         //Debug.Log(manager);
+                        if (dto.msg.Equals("die"))
+                        {
+                            manager.OnMessage(Type.SEND_PARTICIPANT, dto.id + "");
+                            break;
+                        }
                         currParticipant = int.Parse(dto.msg);
                         break;
                 }
@@ -222,6 +240,7 @@ public class NetworkManager : MonoBehaviour
             {
                 Debug.Log(e.ToString());
                 udpClient.Close();
+                isPlayMode = false;
             }
         }
     }
@@ -231,34 +250,34 @@ public class NetworkManager : MonoBehaviour
         return currParticipant;
     }
 
-
-    public void Send(Type type, Vector3 position)
+    public void SendPlayServer(Type type, string msg)
     {
-        Thread thread = new Thread(() => {
-            byte[] buffer = BinaryPack(position);
-            stream.Write(buffer, 0, buffer.Length);
-        });
-        thread.Start();
-    }
-
-    public byte[] BinaryPack(Vector3 position)
-    {
-        using (var stream = new MemoryStream())
-        using (var writer = new BinaryWriter(stream))
+        try
         {
-            writer.Write(0x01);
-            writer.Write(clientId);
-            writer.Write(position.x);
-            writer.Write(position.y);
-            writer.Write(position.z);
-
-            return stream.ToArray();
+           DTO dto = new DTO(clientId, type.ToString(), msg);
+            string dtoToJson = JsonUtility.ToJson(dto);
+            byte[] buffer = Encoding.UTF8.GetBytes(dtoToJson);
+            udpClient.Send(buffer, buffer.Length, playServerIP, serverPort);
+        }catch(Exception e)
+        {
+            Debug.Log(e.ToString());
         }
+        
     }
 
     public void Send(Type type)
     {
-        Send(type, clientNickname);
+        try
+        {
+            DTO dto = new DTO(clientId, type.ToString(), clientNickname);
+            string dtoToJson = JsonUtility.ToJson(dto);
+            byte[] buffer = Encoding.UTF8.GetBytes(dtoToJson);
+            udpClient.Send(buffer, buffer.Length, playServerIP, serverPort);
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e.ToString());
+        }
     }
 }
 

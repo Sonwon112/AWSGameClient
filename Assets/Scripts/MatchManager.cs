@@ -49,4 +49,6 @@ public class MatchManager : MonoBehaviour, Manager
     {
         
     }
+
+    public int getIndex() {  return 1; }
 }
