@@ -15,7 +15,6 @@ public class LoadingText : MonoBehaviour
     public float delay = 3f;
 
 
-
     // Start is called before the first frame update
     void Start()
     {
