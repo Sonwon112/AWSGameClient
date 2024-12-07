@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -25,8 +26,8 @@ public class NetworkManager : MonoBehaviour
 
     // 매치 서버
     private TcpClient tcpClient;
-    private string matchServerIP = "52.70.174.90";
-    //private string matchServerIP = "127.0.0.1"; // 테스트용
+    //private string matchServerIP = "52.70.174.90";
+    private string matchServerIP = "127.0.0.1"; // 테스트용
     private int port = 7777;
     private NetworkStream stream;
     private bool tryConnect = false;
@@ -54,11 +55,16 @@ public class NetworkManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        tcpClient = new TcpClient(matchServerIP, port);
-        stream = tcpClient.GetStream();
-        tryConnect = true;
-        listenThread = new Thread(() => Listen());
-        listenThread.Start();
+       
+        if (!tryConnect)
+        {
+            tcpClient = new TcpClient(matchServerIP, port);
+            stream = tcpClient.GetStream();
+            tryConnect = true;
+            listenThread = new Thread(() => Listen());
+            listenThread.Start();
+        }
+        
         manager = GameObject.FindGameObjectWithTag("Manager").GetComponent<Manager>();
     }
 
@@ -80,9 +86,9 @@ public class NetworkManager : MonoBehaviour
         {
             if (listenThread.IsAlive)
             {
-                tcpClient.Close();
-                udpClient.Close();
-                listenThread.Abort();
+                //tcpClient.Close();
+                //udpClient.Close();
+                //listenThread.Abort();
                 isPlayMode = false;
                 tryConnect = false;
             }
@@ -95,7 +101,7 @@ public class NetworkManager : MonoBehaviour
     /// </summary>
     public void Listen()
     {
-        while (tryConnect)
+        while (tryConnect && !isPlayMode)
         {
             byte[] buffer = new byte[1024];
             try
@@ -111,11 +117,17 @@ public class NetworkManager : MonoBehaviour
                     case Type.CONNECT:
                         {
                             string[] tmp = dto.msg.Split(';');
-                            if (tmp[0] == "success")
+                            if (tmp[0].Equals("success"))
                             {
                                 isConnected = true;
                                 clientId = int.Parse(tmp[1]);
                             }
+                            else if (tmp[0].Equals("playServer"))
+                            {
+                                playServerIP = tmp[1];
+                                ConnectPlayerServer();
+                            }
+
                             break;
                         }
                     case Type.LOGIN:
@@ -161,6 +173,11 @@ public class NetworkManager : MonoBehaviour
     }
 
 
+    public async void getPlayServerIp()
+    {
+        Send(Type.CONNECT, "match");
+    }
+
     public void ConnectPlayerServer()
     {
         try
@@ -173,9 +190,7 @@ public class NetworkManager : MonoBehaviour
             string dtoToJson = JsonUtility.ToJson(dto);
             byte[] buffer = Encoding.UTF8.GetBytes(dtoToJson);
             udpClient.Send(buffer, buffer.Length,playServerIP,serverPort);
-
-            if(listenThread != null)
-                listenThread.Abort();
+            
             isPlayMode = true;
 
             listenThread = new Thread(() => {

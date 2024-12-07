@@ -1059,7 +1059,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1385916034
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1247,6 +1247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isConnected: 0
   clientNickname: test
+  isStartGame: 0
 --- !u!4 &1527406424
 Transform:
   m_ObjectHideFlags: 0

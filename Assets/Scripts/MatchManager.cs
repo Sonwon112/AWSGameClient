@@ -34,11 +34,8 @@ public class MatchManager : MonoBehaviour, Manager
         // 매치 서버에게 플레이서버 IP 요청
         if (networkManager.isConnected)
         {
-            networkManager.ConnectPlayerServer();// 테스트용
-        }
-        else
-        {
-            networkManager.ConnectPlayerServer();
+            //networkManager.ConnectPlayerServer();// 테스트용
+            networkManager.getPlayServerIp();
         }
     }
     public void OnError(string msg)

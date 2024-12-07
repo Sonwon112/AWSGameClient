@@ -16,7 +16,7 @@ public class PlayManager : MonoBehaviour, Manager
 
     private NetworkManager networkManager;
     private bool isPlaying = false;
-    private int totalCount = 1;
+    private int totalCount = 2;
     private int currCount = 0;
 
     private bool isTest = false;
@@ -25,7 +25,7 @@ public class PlayManager : MonoBehaviour, Manager
     private Vector2 BOUNDARY_MAX = new Vector2(49, 49);
 
     private Dictionary<int, GameObject> players = new Dictionary<int, GameObject>();
-
+    private List<string> instantiateList = new List<string>();
     // Start is called before the first frame update
     void Start()
     {
@@ -40,19 +40,28 @@ public class PlayManager : MonoBehaviour, Manager
         else
         {
             networkManager.setManager(this);
+            isPlaying = true;
         }
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!isPlaying && !isTest)
+        if (isPlaying)
         {
             setPlayerCnt(networkManager.getCurrParticipant());
             if (networkManager.isStartGame && !isSpawnedOwn) { 
                 StartGame();
                 networkManager.setManager(this);
                 isSpawnedOwn=true;
+            }
+
+            if (instantiateList.Count > 0) {
+                foreach (string s in instantiateList) {
+                    string[] tmp = s.Split(';');
+                    instantiateOtherPlayer(int.Parse(tmp[0]), tmp[1]);
+                }
+                instantiateList.Clear();
             }
         }
     }
@@ -81,8 +90,7 @@ public class PlayManager : MonoBehaviour, Manager
                 StartGame();
                 break;
             case Type.INSTANTIATE:
-                string[] tmp = msg.Split(';');
-                instantiateOtherPlayer(int.Parse(tmp[0]), tmp[1]);
+                instantiateList.Add(msg);
                 break;
             case Type.SEND_TRANSFORM:
                 setOthrePlayTransform(msg);
@@ -125,6 +133,7 @@ public class PlayManager : MonoBehaviour, Manager
 
     public void instantiateOtherPlayer(int id, string nickname)
     {
+        if (players.ContainsKey(id)) return;
         GameObject tmp = Instantiate(Player);
         tmp.GetComponent<Player>().setNickname(nickname);
         players.Add(id, tmp);

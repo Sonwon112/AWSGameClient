@@ -1,3 +1,4 @@
+using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -40,6 +41,11 @@ public class Player : MonoBehaviour
                 Destroy(gameObject);
             }
         }
+        else
+        {
+            GetComponentInChildren<CinemachineVirtualCamera>().Priority = 10;
+        }
+
     }
 
     public void setPlayerPosition(Vector3 pos)
