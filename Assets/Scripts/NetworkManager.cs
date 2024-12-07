@@ -26,8 +26,8 @@ public class NetworkManager : MonoBehaviour
 
     // 매치 서버
     private TcpClient tcpClient;
-    //private string matchServerIP = "52.70.174.90";
-    private string matchServerIP = "127.0.0.1"; // 테스트용
+    private string matchServerIP = "52.70.174.90";
+    //private string matchServerIP = "127.0.0.1"; // 테스트용
     private int port = 7777;
     private NetworkStream stream;
     private bool tryConnect = false;
